@@ -10,10 +10,13 @@ from pathlib import Path
 from PIL import Image
 
 # settings, defaulting to local OCT dataset folder and output CSV file in the same folder as this script
-DATA_FOLDER = Path(__file__).parent / "OCT"
+DATA_FOLDER = Path(__file__).resolve().parents[2] / "data" / "OCT"
 # can use global path instead using r string
-# DATA_FOLDER = Path(r"C:\whatever\your\path\is\to\OCT")
-OUTPUT_CSV = Path(__file__).parent / "image_hashes.csv"
+# DATA_FOLDER = Path(r"C:\whatever\your\path\is\to\data\OCT")
+# currently written to account for /src/SeeNN/
+# before navigating to /root/data/OCT/
+OUTPUT_CSV = DATA_FOLDER / "image_hashes.csv"
+
 
 SPLITS = ["train", "test"]
 CLASSES = ["CNV", "DME", "DRUSEN", "NORMAL"]
