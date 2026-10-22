@@ -4,8 +4,9 @@ reads our list of hashes, finds dupes, writes list of images to leave out to omi
 import csv
 from pathlib import Path
 
-HASHES_CSV = Path(__file__).parent / "image_hashes.csv"
-OMIT_CSV = Path(__file__).parent / "omit_list.csv"
+DATA_FOLDER = Path(__file__).resolve().parents[2] / "data" / "OCT"
+HASHES_CSV = DATA_FOLDER / "image_hashes.csv"
+OMIT_CSV = DATA_FOLDER / "omit_list.csv"
 
 
 def match_key(row):
