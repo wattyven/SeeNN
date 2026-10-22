@@ -6,6 +6,8 @@ image flipped left to right, then writes everything to image_hashes.csv
 """
 import csv
 import hashlib
+import os
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from PIL import Image
 
@@ -17,9 +19,10 @@ DATA_FOLDER = Path(__file__).resolve().parents[2] / "data" / "OCT"
 # before navigating to /root/data/OCT/
 OUTPUT_CSV = DATA_FOLDER / "image_hashes.csv"
 
-
 SPLITS = ["train", "test"]
 CLASSES = ["CNV", "DME", "DRUSEN", "NORMAL"]
+WORKERS = max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 1) - 2) # parallelize on multiple workers with an appropriate method of counting avail. cpu threads
+CHUNK_SIZE = 128 # number of images handed to a worker at a time
 
 
 def fingerprint(image):
@@ -51,6 +54,31 @@ def find_images():
     return found
 
 
+def hash_one_image(task):
+    """returns the csv row for one (split, class, path), runs in a worker process"""
+    split, class_name, path = task
+    row = {
+        "file": path.relative_to(DATA_FOLDER).as_posix(),  #folder and filename relative to dataset
+        "split": split,
+        "class": class_name,
+        "patient": extract_id(path.name),
+        "readable": "yes",
+        "pixel_hash": "",
+        "mirror_hash": "",
+        "error": "",
+    }
+    try:
+        with Image.open(path) as image:
+            image.load()  # load image
+            row["pixel_hash"] = fingerprint(image)
+            flipped = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            row["mirror_hash"] = fingerprint(flipped)
+    except Exception as error: # if unreadable, note as such and append to counter
+        row["readable"] = "no"
+        row["error"] = str(error)
+    return row
+
+
 def main():
     # error out if the data folder doesn't exist, or if no images are found
     if not DATA_FOLDER.is_dir():
@@ -66,30 +94,16 @@ def main():
 
     rows = []
     unreadable = 0
-    for number, (split, class_name, path) in enumerate(image_files, start=1):
-        row = {
-            "file": path.relative_to(DATA_FOLDER).as_posix(),  #folder and filename relative to dataset
-            "split": split,
-            "class": class_name,
-            "patient": extract_id(path.name),
-            "readable": "yes",
-            "pixel_hash": "",
-            "mirror_hash": "",
-            "error": "",
-        }
-        try:
-            with Image.open(path) as image:
-                image.load()  # load image
-                row["pixel_hash"] = fingerprint(image)
-                flipped = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-                row["mirror_hash"] = fingerprint(flipped)
-        except Exception as error: # if unreadable, note as such and append to counter
-            row["readable"] = "no"
-            row["error"] = str(error)
-            unreadable += 1
-        rows.append(row)
-        if number % 5000 == 0:
-            print(f"{number:,} of {len(image_files):,} done")
+    # map spreads the images across the workers and hands the rows back in the original order,
+    # but workers can't share the counter, so unreadable images get counted here instead
+    with ProcessPoolExecutor(max_workers=WORKERS) as pool:
+        results = pool.map(hash_one_image, image_files, chunksize=CHUNK_SIZE)
+        for number, row in enumerate(results, start=1):
+            if row["readable"] == "no":
+                unreadable += 1
+            rows.append(row)
+            if number % 5000 == 0:
+                print(f"{number:,} of {len(image_files):,} done")
 
     with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
