@@ -83,7 +83,7 @@ def main():
                 to_omit.append(omit_entry(row, "conflicting labels", group))
         elif test_copies:
             for row in train_copies:
-                to_omit.append(omit_entry(row, "copy of a test image", group))
+                to_omit.append(omit_entry(row, "copy of test image", group))
         else:
             for row in train_copies[1:]:
                 to_omit.append(omit_entry(row, "extra copy within training", group))
@@ -101,7 +101,7 @@ def main():
     print(f"Dupes across patients (these patients must be put into the same split): {across_patients:,}")
     print(f"Dupes across train and test: {across_splits:,}")
     print(f"Dupes with conflicting labels: {conflicting:,}")
-    print(f"DUpes containing a mirror: {with_mirror:,}")
+    print(f"Dupes containing a mirror: {with_mirror:,}")
     print(f"Extra copies in test: {extra_test_copies:,}")
     print()
     print(f"Images to omit: {len(to_omit):,}")
