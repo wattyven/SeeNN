@@ -122,7 +122,7 @@ def process_all(omit, run):
     files = find_image_files(SPLITS)
     tasks = [task for task in files if relative_name(task[2]) not in omit]
     counts = Counter(skipped=len(files) - len(tasks))
-    print(f"Step 1: processing {len(tasks):,} images")
+    print(f"Processing {len(tasks):,} images")
 
     # old log is for old runs, so delete it to avoid confusion
     LOG_CSV.unlink(missing_ok=True)
