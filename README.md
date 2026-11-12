@@ -10,7 +10,7 @@ Download it, unzip the nested archives, and move ONLY the `OCT` folder (containi
 
 ## Setup
 
-Python 3.14 (tested on 3.14.8) on Windows 11. Everything in M3 runs solely on CPU; TensorFlow (tested ver. 2.22) has no GPU support on native Windows after 2.10 without using WSL2.
+Python 3.14 (tested on 3.14.8) on Windows 11. Everything so far through M3 runs solely on CPU; TensorFlow (tested ver. 2.22) has no GPU support on native Windows after 2.10 without using WSL2.
 
 ```
 pip install -r requirements.txt
@@ -33,12 +33,26 @@ python -m pytest tests            # no patient, group or image in more than one 
 
 Then run `src/SeeNN/eda.ipynb` from top to bottom for the figures, normalization statistics, pipeline timings and smoke test.
 
+## Baselines (M4)
+
+Every model is scored the same way on the validation split, with macro F1 as the primary metric, and without touching the test set.
+
+```
+python src/SeeNN/models/logitbaseline.py  # HOG + logistic regression, trained if no saved predictions in destination folder
+python src/SeeNN/evaluatebaseline.py      # results table and figures for every model from saved predictions
+```
+
 ## Structure
 
 ```
-src/SeeNN/   cleaning, split and tf.data pipeline scripts, eda.ipynb, Figures/
-tests/       test_split.py, leakage checks
-data/        .gitignore
+src/SeeNN/              
+  evaluatebaseline.py   
+  models/               
+results/                
+tests/                  
+data/                   .gitignore
+checkpoints/            .gitignore
+
 ```
 
 ## License
