@@ -1,0 +1,11 @@
+# dataset (download per README) and trained models, too large for git
+data/
+checkpoints/
+
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# editor settings
+.vscode/
