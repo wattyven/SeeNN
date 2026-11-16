@@ -8,7 +8,7 @@ and DME recall by scan size (512×512 vs other sizes, the shortcut identified at
 Reads results/<model>/predictions_val_seed<SEED>_<SETTINGS>.csv (one per seed) for each model in MODELS, and
 results/<model>/sweep.csv where a model has one (the logistic regression's train and val loss and val macro F1 for
 each C tried, and which C was chosen), and the CNN's learning_check.csv and history_seed*.csv (loss on one small batch
-at each step, and train and val loss at each epoch of each seed).
+at each step, and train and val loss at each epoch of each seed, plus each seed's training time).
 
 Writes results/runs.csv (per-run metrics), results/results.csv (per-model mean, with the sd across seeds when there
 are several), and results/figures/ (a confusion matrix and error examples per model, a tuning figure from each
@@ -35,7 +35,8 @@ PRINTED = [(None, {"macro_f1": "macro F1 (primary metric)", "accuracy": "accurac
            ("F1 by class", {f"f1_{c}": c for c in CLASSES}),
            ("urgent referral (CNV or DME)", {"urgent_sensitivity": "sensitivity: urgent scans flagged urgent", 
                                              "urgent_specificity": "specificity: other scans not flagged"}),
-           ("shortcut check: share of DME scans called DME", {"dme_recall_512x512": "512x512 scans", "dme_recall_other_sizes": "other sizes"})]
+           ("shortcut check: share of DME scans called DME", {"dme_recall_512x512": "512x512 scans", "dme_recall_other_sizes": "other sizes"}),
+           ("cost", {"minutes_per_epoch": "minutes per training pass (epoch)"})]
 
 INK, MUTED, GRID, LINE = "#2b2b2b", "#5f6b7a", "#e3e5e8", "#2a78d6"
 plt.rcParams.update({"font.size": 8, "axes.titlesize": 8, "axes.spines.top": False, "axes.spines.right": False, "figure.constrained_layout.use": True, "savefig.dpi": 200})
@@ -88,8 +89,12 @@ def summary_table(runs):
     for model, group in runs.groupby("model", sort=False):
         row = {"model": model, "seeds": len(group) if group["seeds"].iloc[0] else "none, no training"}
         for metric in [c for c in runs.columns if c not in ("model", "seeds", "file")]:
+            if group[metric].isna().all():  # only CNN is saving training time, remove if added for logit
+                row[metric] = "-"
+                continue
             mean, sd = group[metric].mean(), group[metric].std()
-            row[metric] = f"{mean:.3f} ± {sd:.3f}" if len(group) > 1 else f"{mean:.3f}"
+            digits = 1 if metric == "minutes_per_epoch" else 3
+            row[metric] = f"{mean:.{digits}f} ± {sd:.{digits}f}" if len(group) > 1 else f"{mean:.{digits}f}"
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -229,8 +234,18 @@ def main():
             if predictions["file"].tolist() != val["file"].tolist():
                 raise ValueError(f"{path} does not hold the val split in splits.csv order")
             predictions["output"] = val["output"]
+            # training time per epoch, from the timer in cnnbaseline.py's train(): it times model.fit and saves the
+            # total in the train_minutes column of history_seed<SEED>_<SETTINGS>.csv
+            # the history file shares its seed and settings with this predictions file, so only the start of the name differs
+            history = path.with_name(path.name.replace("predictions_val", "history"))
+            if history.exists():  # only the CNN saves a history
+                epochs = pd.read_csv(history)  # one row per epoch run before early stopping
+                # total minutes / epochs run. each epoch includes its validation pass, the first epoch also builds the data cache
+                minutes_per_epoch = epochs["train_minutes"].iloc[0] / len(epochs)
+            else:
+                minutes_per_epoch = np.nan
             runs.append({"model": name, "seeds": len(files), "file": path.relative_to(ROOT).as_posix(),
-                         **scores(true, predictions["pred"].to_numpy(), sizes)})
+                         **scores(true, predictions["pred"].to_numpy(), sizes), "minutes_per_epoch": minutes_per_epoch})
             if k == 0:  # figures from the first seed
                 confusion_figure(true, predictions["pred"].to_numpy(), name, FIGURES_FOLDER / f"confusion_{folder}.png")
                 errors_figure(predictions, name, FIGURES_FOLDER / f"errors_{folder}.png")
