@@ -1,0 +1,15 @@
+# small CNN baseline (models/cnnbaseline.py, and the learning check in notebooks/02_baselines.ipynb)
+# the filters (32, 64, 128, 256) are written into build_model's layers; batch size comes from config.yaml
+# every training setting goes into the predictions file's name, so a file is only reused by the settings that made it
+
+seeds: [7615, 7616, 7617]   # at least three, per the milestone. each changes the starting weights and shuffle order
+
+dropout: 0.3
+learning_rate: 0.001        # default for adam and standard starting point
+max_epochs: 20
+patience: 3                 # stop if validation loss has not improved for 3 epochs in a row
+
+learning_check:
+  per_class: 4              # 16 scans in the batch
+  steps: 200                # updates on the same batch: the loss is close to zero well before this
+  max_loss: 0.01            # passes below this training loss, with every scan predicted correctly (in training mode)

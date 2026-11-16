@@ -7,10 +7,13 @@ and DME recall by scan size (512×512 vs other sizes, the shortcut identified at
 
 Reads results/<model>/predictions_val_seed<SEED>_<SETTINGS>.csv (one per seed) for each model in MODELS, and
 results/<model>/sweep.csv where a model has one (the logistic regression's train and val loss and val macro F1 for
-each C tried, and which C was chosen).
+each C tried, and which C was chosen), and the CNN's learning_check.csv and history_seed*.csv (loss on one small batch
+at each step, and train and val loss at each epoch of each seed).
+
 Writes results/runs.csv (per-run metrics), results/results.csv (per-model mean, with the sd across seeds when there
-are several), and results/figures/ (a confusion matrix and error examples per model, and a tuning figure from each
-sweep.csv). The most-common-class baseline requires no predictions file to compute and the test split is never used.
+are several), and results/figures/ (a confusion matrix and error examples per model, a tuning figure from each
+sweep.csv, and the learning check and loss curves from the CNN's files). The most-common-class baseline requires
+no predictions file to compute and the test split is never used.
 
 """
 import matplotlib.pyplot as plt
@@ -23,11 +26,8 @@ from split import CLASSES, SEED, SPLITS_CSV
 from standardize import LOG_CSV, OUTPUT_FOLDER
 
 FIGURES_FOLDER = RESULTS_FOLDER / "figures"
-MODELS = {"logitbaseline": "HOG + logistic regression"}  
-# when small cnn ready, add the following entry to the models dict
-# "cnnbaseline": shallow CNN
-# this eval will work so long as the cnnbaseline model 
-# writes outputs to results/cnnbaseline/predictions_val_SEED_SETTINGS.csv
+MODELS = {"logitbaseline": "HOG + logistic regression", "cnnbaseline": "small CNN"}
+# a model is scored once it writes results/<model>/predictions_val_seed<SEED>_<SETTINGS>.csv
 URGENT = ["CNV", "DME"]
 ERROR_KINDS, ERROR_EXAMPLES = 6, 4  # most common kinds of error, and random examples of each, in the errors figure
 # how the table is printed on screen: (heading, {column in results.csv: label in plain words}), in order
@@ -180,6 +180,40 @@ def tuning_figure(sweep, chosen, path):
     plt.close(fig)
 
 
+def learning_check_figure(check, name, path):
+    """training loss at each step on one small batch, log scale so the approach to zero stays visible"""
+    fig, ax = plt.subplots(figsize=(4.8, 2.8))
+    ax.plot(check["step"], check["loss"], color=LINE, linewidth=2)
+    ax.set_yscale("log")
+    ax.set(xlabel="training step (the same batch every step)", ylabel="cross-entropy loss (log scale)")
+    ax.grid(color=GRID, linewidth=0.6)
+    ax.set_axisbelow(True)
+    fig.suptitle(f"{name}: learning check on {check['total'].iloc[0]} training scans, no dropout\n"
+                 f"final loss {check['loss'].iloc[-1]:.5f}, {check['correct'].iloc[0]} of "
+                 f"{check['total'].iloc[0]} predicted correctly (training mode)")
+    fig.savefig(path)
+    plt.close(fig)
+
+
+def loss_curves_figure(histories, name, path):
+    """train and val loss at each epoch, one panel per seed, with the epoch whose weights were kept dashed"""
+    fig, axes = plt.subplots(1, len(histories), figsize=(7.2, 2.8), sharey=True, squeeze=False)
+    for ax, (seed, history) in zip(axes[0], histories.items()):
+        for column, label, color in [("loss", "train", MUTED), ("val_loss", "val", LINE)]:
+            ax.plot(history["epoch"], history[column], color=color, linewidth=2, marker="o", markersize=3, label=label)
+        chosen = history.loc[history["chosen"], "epoch"].iloc[0]
+        ax.axvline(chosen, color=INK, linestyle="--", linewidth=1)
+        ax.set(xlabel="epoch", title=f"seed {seed}: kept epoch {chosen}")
+        ax.set_xticks(history["epoch"])
+        ax.grid(color=GRID, linewidth=0.6)
+        ax.set_axisbelow(True)
+    axes[0][0].set_ylabel("class-weighted cross-entropy")
+    axes[0][0].legend(frameon=False)
+    fig.suptitle(f"{name}: train and val loss per epoch (dashed: lowest val loss, whose weights were kept)")
+    fig.savefig(path)
+    plt.close(fig)
+
+
 def main():
     FIGURES_FOLDER.mkdir(parents=True, exist_ok=True)
     val = read_split("val")
@@ -205,6 +239,13 @@ def main():
             sweep = pd.read_csv(sweep_file)
             chosen = sweep.loc[sweep["chosen"], "C"].iloc[0]
             tuning_figure(sweep, chosen, FIGURES_FOLDER / f"tuning_{folder}.png")
+        check_file = RESULTS_FOLDER / folder / "learning_check.csv"
+        if check_file.exists():
+            learning_check_figure(pd.read_csv(check_file), name, FIGURES_FOLDER / f"learning_check_{folder}.png")
+        history_files = sorted((RESULTS_FOLDER / folder).glob("history_seed*.csv"))
+        if history_files:
+            histories = {path.stem.split("_")[1].removeprefix("seed"): pd.read_csv(path) for path in history_files}
+            loss_curves_figure(histories, name, FIGURES_FOLDER / f"loss_curves_{folder}.png")
 
     runs = pd.DataFrame(runs)
     runs.round(4).to_csv(RESULTS_FOLDER / "runs.csv", index=False)

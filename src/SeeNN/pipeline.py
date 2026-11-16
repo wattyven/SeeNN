@@ -83,10 +83,11 @@ def decode(path, label):
     return image, label
 
 
-def make_dataset(name, batch_size=BATCH_SIZE, shuffle=None):
+def make_dataset(name, batch_size=BATCH_SIZE, shuffle=None, seed=SEED):
     """batches of (float32 images, int32 labels) for one split.
-    decode in parallel -> cache the uint8 images in memory -> 
-    shuffle (train only) -> batch -> normalize -> prefetch"""
+    decode in parallel -> cache the uint8 images in memory ->
+    shuffle (train only) -> batch -> normalize -> prefetch
+    seed sets the shuffle order, so models trained over several seeds also see the data in different orders"""
     stats = load_stats()
     mean, std = stats["mean"], stats["std"]
     if shuffle is None:
@@ -100,7 +101,7 @@ def make_dataset(name, batch_size=BATCH_SIZE, shuffle=None):
     ds = ds.map(decode, num_parallel_calls=tf.data.AUTOTUNE).cache() # decode the PNGs in parallel and cache the uint8 images in memory
     if shuffle:
         # the files are sorted by class, so the buffer has to hold the whole split to mix them
-        ds = ds.shuffle(len(paths), seed=SEED, reshuffle_each_iteration=True) # shuffle the training split, but not the validation or test splits
+        ds = ds.shuffle(len(paths), seed=seed, reshuffle_each_iteration=True) # shuffle the training split, but not the validation or test splits
     ds = ds.batch(batch_size).map(normalize, num_parallel_calls=tf.data.AUTOTUNE)
     return ds.prefetch(tf.data.AUTOTUNE)
 

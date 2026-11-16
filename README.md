@@ -39,17 +39,22 @@ Then run `notebooks/01_eda.ipynb` from top to bottom for the figures, normalizat
 
 Every model is scored the same way on the validation split, with macro F1 as the primary metric, and without touching the test set.
 
+First run section 1 of `notebooks/02_baselines.ipynb`: the small CNN's learning check on one batch of 16 scans (about 15 minutes on CPU). Then:
+
 ```
 python src/SeeNN/models/logitbaseline.py  # HOG + logistic regression, trained if no saved predictions in destination folder
+python src/SeeNN/models/cnnbaseline.py    # small CNN, 3 seeds (use a GPU)
 python src/SeeNN/evaluatebaseline.py      # results table and figures for every model from saved predictions
 ```
+
+Section 2 of `notebooks/02_baselines.ipynb` then shows both baselines' training curves.
 
 ## Structure
 
 ```
 config.yaml             shared settings for every script and notebook
 configs/                settings and seeds for each baseline
-notebooks/              01_eda, 03_baselines
+notebooks/              01_eda, 02_baselines
 src/SeeNN/
   config.py             reads config.yaml and configs/
   evaluatebaseline.py
