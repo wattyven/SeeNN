@@ -1,0 +1,4 @@
+﻿model,seeds,macro_f1,accuracy,f1_CNV,f1_DME,f1_DRUSEN,f1_NORMAL,urgent_sensitivity,urgent_specificity,dme_recall_512x512,dme_recall_other_sizes,minutes_per_epoch
+most common class (NORMAL),"none, no training",0.167,0.500,0.000,0.000,0.000,0.667,0.000,1.000,0.000,0.000,-
+HOG + logistic regression,1,0.627,0.723,0.801,0.487,0.400,0.820,0.822,0.858,0.602,0.538,-
+small CNN,3,0.928 ± 0.008,0.955 ± 0.005,0.953 ± 0.002,0.919 ± 0.007,0.861 ± 0.021,0.980 ± 0.005,0.949 ± 0.009,0.992 ± 0.003,0.937 ± 0.030,0.882 ± 0.020,19.2 ± 1.1

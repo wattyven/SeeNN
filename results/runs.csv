@@ -1,0 +1,6 @@
+model,seeds,file,macro_f1,accuracy,f1_CNV,f1_DME,f1_DRUSEN,f1_NORMAL,urgent_sensitivity,urgent_specificity,dme_recall_512x512,dme_recall_other_sizes,minutes_per_epoch
+most common class (NORMAL),0,,0.1666,0.4999,0.0,0.0,0.0,0.6665,0.0,1.0,0.0,0.0,
+HOG + logistic regression,1,results/logitbaseline/predictions_val_seed7615_hog124_orient9_cell8_block2_C0.0001-0.001-0.01-0.1_balanced_iter3000.csv,0.6271,0.7231,0.8015,0.4868,0.4002,0.8202,0.8215,0.8577,0.602,0.5378,
+small CNN,3,results/cnnbaseline/predictions_val_seed7615_in248_drop0.3_adam0.001_batch64_ep20_pat3.csv,0.92,0.9496,0.9551,0.9138,0.8366,0.9746,0.9598,0.9878,0.9547,0.8981,20.49
+small CNN,3,results/cnnbaseline/predictions_val_seed7616_in248_drop0.3_adam0.001_batch64_ep20_pat3.csv,0.9348,0.9591,0.9513,0.9269,0.8763,0.9845,0.9467,0.994,0.9529,0.8875,18.4463
+small CNN,3,results/cnnbaseline/predictions_val_seed7617_in248_drop0.3_adam0.001_batch64_ep20_pat3.csv,0.9298,0.9561,0.953,0.9153,0.8697,0.9814,0.9417,0.9938,0.902,0.8594,18.7978
