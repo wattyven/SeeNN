@@ -2,9 +2,9 @@
 reads our list of hashes, finds dupes, writes list of images to leave out to omit_list.csv
 """
 import csv
-from pathlib import Path
 
-DATA_FOLDER = Path(__file__).resolve().parents[2] / "data" / "OCT"
+from config import DATA_FOLDER  # set in config.yaml
+
 HASHES_CSV = DATA_FOLDER / "image_hashes.csv"
 OMIT_CSV = DATA_FOLDER / "omit_list.csv"
 

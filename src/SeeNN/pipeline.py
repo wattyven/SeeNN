@@ -22,12 +22,12 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
+from config import BATCH_SIZE  # set in config.yaml
 from split import CLASSES, DATA_FOLDER, SEED, SPLITS_CSV
 from standardize import OUTPUT_FOLDER, OUTPUT_HEIGHT, OUTPUT_WIDTH
 
 STATS_CSV = DATA_FOLDER / "norm_stats.csv"
 INPUT_SHAPE = (OUTPUT_HEIGHT, OUTPUT_WIDTH, 1)
-BATCH_SIZE = 64
 THREADS = max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 1) - 2)
 
 

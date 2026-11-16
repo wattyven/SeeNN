@@ -1,0 +1,10 @@
+# HOG + logistic regression baseline (models/logitbaseline.py). the seed comes from config.yaml
+# every setting here goes into the predictions file's name, so a file is only reused by the settings that made it
+
+hog_size: 124            # scans are resized to 124 x 124 before HOG
+orientations: 9
+pixels_per_cell: 8
+cells_per_block: 2
+C_grid: [0.0001, 0.001, 0.01, 0.1]   # regularization strengths tried; the best is chosen on val
+class_weight: balanced
+max_iter: 3000

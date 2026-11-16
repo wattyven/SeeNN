@@ -12,24 +12,20 @@ from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import nullcontext
 from functools import partial
-from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+from config import CLASSES, CROP_HEIGHT, DATA_FOLDER, IMAGE_SIZE, OUTPUT_FOLDER  # set in config.yaml
 
-DATA_FOLDER = Path(__file__).resolve().parents[2] / "data" / "OCT"
-OUTPUT_FOLDER = DATA_FOLDER.parent / "OCT_standardized"
 OMIT_CSV = DATA_FOLDER / "omit_list.csv"
 LOG_CSV = DATA_FOLDER / "standardize_log.csv"
 
-CROP_HEIGHT = 496 # height of almost every scan in the dataset, so most scans aren't cropped at all
-OUTPUT_WIDTH, OUTPUT_HEIGHT = 248, 248 # half of CROP_HEIGHT, so the vertical resize is an even 2:1
+OUTPUT_WIDTH, OUTPUT_HEIGHT = IMAGE_SIZE, IMAGE_SIZE # half of CROP_HEIGHT, so the vertical resize is an even 2:1
 
 WORKERS = max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 1) - 2)  # 1 for no multiprocessing
 CHUNK_SIZE = 32 # number of images handed to a worker for processing at a time
 
 SPLITS = ["train", "test"]
-CLASSES = ["CNV", "DME", "DRUSEN", "NORMAL"]
 
 
 # finding images

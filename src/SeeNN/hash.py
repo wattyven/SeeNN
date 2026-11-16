@@ -11,16 +11,11 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from PIL import Image
 
-# settings, defaulting to local OCT dataset folder and output CSV file in the same folder as this script
-DATA_FOLDER = Path(__file__).resolve().parents[2] / "data" / "OCT"
-# can use global path instead using r string
-# DATA_FOLDER = Path(r"C:\whatever\your\path\is\to\data\OCT")
-# currently written to account for /src/SeeNN/
-# before navigating to /root/data/OCT/
+from config import CLASSES, DATA_FOLDER  # data folder and class names are set in config.yaml
+
 OUTPUT_CSV = DATA_FOLDER / "image_hashes.csv"
 
 SPLITS = ["train", "test"]
-CLASSES = ["CNV", "DME", "DRUSEN", "NORMAL"]
 WORKERS = max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 1) - 2) # parallelize on multiple workers with an appropriate method of counting avail. cpu threads
 CHUNK_SIZE = 128 # number of images handed to a worker at a time
 

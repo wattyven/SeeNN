@@ -32,13 +32,13 @@ from sklearn.utils.class_weight import compute_sample_weight
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # src/SeeNN, for the modules below
 import evaluatebaseline
+from config import CHECKPOINTS_FOLDER, run_config
 from split import CLASSES, SEED # from previous milestone
 from standardize import OUTPUT_FOLDER
 
 RESULTS = evaluatebaseline.RESULTS_FOLDER / "logitbaseline"
-CHECKPOINT = evaluatebaseline.ROOT / "checkpoints" / "logitbaseline.joblib"
-SETTINGS = {"seed": SEED, "hog_size": 124, "orientations": 9, "pixels_per_cell": 8, "cells_per_block": 2,
-            "C_grid": [0.0001, 0.001, 0.01, 0.1], "class_weight": "balanced", "max_iter": 3000}
+CHECKPOINT = CHECKPOINTS_FOLDER / "logitbaseline.joblib"
+SETTINGS = {"seed": SEED, **run_config("logitbaseline")}  # from config.yaml and configs/logitbaseline.yaml
 # every setting above goes into the predictions file's name, so a file is only reused by the settings that made it
 TAG = (f"seed{SETTINGS['seed']}_hog{SETTINGS['hog_size']}_orient{SETTINGS['orientations']}"
        f"_cell{SETTINGS['pixels_per_cell']}_block{SETTINGS['cells_per_block']}"

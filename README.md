@@ -19,6 +19,8 @@ pip install --force-reinstall --no-deps keras==3.15.1
 
 The second command is needed because tensorflow 2.22.0rc0 also installs keras-nightly into the same folder.
 
+Shared settings (paths, seed, classes, val fraction, resolution, batch size) are in `config.yaml`, and each baseline's settings and seeds are in `configs/`. Every script and notebook reads them through `src/SeeNN/config.py`.
+
 ## Reproduce
 
 From the repository root, in order:
@@ -31,7 +33,7 @@ python src/SeeNN/split.py         # patient-grouped train/val split -> data/OCT/
 python -m pytest tests            # no patient, group or image in more than one set
 ```
 
-Then run `src/SeeNN/eda.ipynb` from top to bottom for the figures, normalization statistics, pipeline timings and smoke test.
+Then run `notebooks/01_eda.ipynb` from top to bottom for the figures, normalization statistics, pipeline timings and smoke test.
 
 ## Baselines (M4)
 
@@ -45,11 +47,15 @@ python src/SeeNN/evaluatebaseline.py      # results table and figures for every 
 ## Structure
 
 ```
-src/SeeNN/              
-  evaluatebaseline.py   
-  models/               
-results/                
-tests/                  
+config.yaml             shared settings for every script and notebook
+configs/                settings and seeds for each baseline
+notebooks/              01_eda, 03_baselines
+src/SeeNN/
+  config.py             reads config.yaml and configs/
+  evaluatebaseline.py
+  models/
+results/
+tests/
 data/                   .gitignore
 checkpoints/            .gitignore
 

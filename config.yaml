@@ -1,0 +1,23 @@
+# shared settings used by every script and notebook, read through src/SeeNN/config.py
+# settings for one model's runs live in configs/<model>.yaml instead
+
+# folders, relative to the repo root (an absolute path also works, e.g. C:/whatever/data/OCT)
+paths:
+  data: data/OCT                        # the dataset's train/ and test/ folders, plus the csv files the scripts write
+  standardized: data/OCT_standardized   # cleaned pngs written by standardize.py
+  results: results                      # predictions, results tables and figures
+  checkpoints: checkpoints              # trained models (not in git)
+
+seed: 7615                              # one seed for the split, sampling and the first training run
+classes: [CNV, DME, DRUSEN, NORMAL]     # this order sets the label numbers 0-3
+
+# split.py
+val_fraction: 0.2   # share of the training patients moved to val. best if 1/val_fraction is a whole number
+                    # (0.2 = 5 folds, 0.1 = 10 folds), otherwise the number of folds is rounded
+
+# standardize.py
+crop_height: 496    # height of almost every scan, so most scans aren't cropped at all
+image_size: 248     # output width and height: half of crop_height, so the vertical resize is an even 2:1
+
+# pipeline.py
+batch_size: 64

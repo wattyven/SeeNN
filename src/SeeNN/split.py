@@ -11,22 +11,15 @@ run hash.py, dupe.py and standardize.py first
 """
 import csv
 from collections import Counter, defaultdict
-from pathlib import Path
-
 from sklearn.model_selection import StratifiedGroupKFold
 
-DATA_FOLDER = Path(__file__).resolve().parents[2] / "data" / "OCT"
+from config import CLASSES, DATA_FOLDER, SEED, VAL_FRACTION  # set in config.yaml
+
 HASHES_CSV = DATA_FOLDER / "image_hashes.csv"
 LOG_CSV = DATA_FOLDER / "standardize_log.csv"
 SPLITS_CSV = DATA_FOLDER / "splits.csv"
 
-SEED = 7615
-VAL_FRACTION = 0.2 # proportion of training data to assign to validation
-# best to use a number that divides evenly into 1/VAL_FRACTION, to balance folds
-# otherwise we round
-# ex 0.2 = 5 folds, 0.1 = 10 folds, but 0.15 leads to 7 folds
 SPLITS = ["train", "val", "test"]
-CLASSES = ["CNV", "DME", "DRUSEN", "NORMAL"]
 
 
 def match_key(row):

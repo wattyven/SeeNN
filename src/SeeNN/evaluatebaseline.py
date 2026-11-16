@@ -18,11 +18,10 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-from split import CLASSES, DATA_FOLDER, SEED, SPLITS_CSV
+from config import RESULTS_FOLDER, ROOT  # set in config.yaml
+from split import CLASSES, SEED, SPLITS_CSV
 from standardize import LOG_CSV, OUTPUT_FOLDER
 
-ROOT = DATA_FOLDER.parents[1]  # repo root
-RESULTS_FOLDER = ROOT / "results"
 FIGURES_FOLDER = RESULTS_FOLDER / "figures"
 MODELS = {"logitbaseline": "HOG + logistic regression"}  
 # when small cnn ready, add the following entry to the models dict
