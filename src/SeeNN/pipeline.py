@@ -1,8 +1,8 @@
 """
 SCRIPTS FOR LOADING INTO MODULES, THIS PIPELINE ISN'T CONFIGURED FOR DIRECT EXECUTION
 import it into other scripts so that they can call the functions in here and load our cleaned data!!!
-currently configured for tf, but might swap it to keras -> pytorch later bc tf doesn't support cuda on native windows atm
-but tbh tf is fine for now on cpu because of how light the data are
+tf.data runs on the cpu and can feed a model on any keras backend. cnnbaseline.py runs keras on pytorch, which has
+cuda on native windows (tf doesn't after 2.10)
 
 tf.data input pipeline for the standardized OCT images, the same for every split
 

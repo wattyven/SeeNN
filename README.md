@@ -10,7 +10,7 @@ Download it, unzip the nested archives, and move ONLY the `OCT` folder (containi
 
 ## Setup
 
-Python 3.14 (tested on 3.14.8) on Windows 11. Everything so far through M3 runs solely on CPU; TensorFlow (tested ver. 2.22) has no GPU support on native Windows after 2.10 without using WSL2.
+Python 3.14 (tested on 3.14.8) on Windows 11. The small CNN trains on an NVIDIA GPU through Keras 3's PyTorch backend (tested: torch 2.14.1 with CUDA 13.0 on an RTX 5070 Ti), because TensorFlow has no GPU support on native Windows after 2.10. TensorFlow (tested ver. 2.22) still loads the images through `tf.data`, on the CPU, and everything else runs on the CPU too. `requirements.txt` fetches the CUDA build of torch from PyTorch's own package index; it also runs, more slowly, on a machine without an NVIDIA GPU.
 
 ```
 pip install -r requirements.txt
@@ -39,11 +39,11 @@ Then run `notebooks/01_eda.ipynb` from top to bottom for the figures, normalizat
 
 Every model is scored the same way on the validation split, with macro F1 as the primary metric, and without touching the test set.
 
-First run section 1 of `notebooks/02_baselines.ipynb`: the small CNN's learning check on one batch of 16 scans (about 15 minutes on CPU). Then:
+First run section 1 of `notebooks/02_baselines.ipynb`: the small CNN's learning check on one batch of 16 scans (runs on a 5070Ti in under 30 seconds). Then:
 
 ```
 python src/SeeNN/models/logitbaseline.py  # HOG + logistic regression, trained if no saved predictions in destination folder
-python src/SeeNN/models/cnnbaseline.py    # small CNN, 3 seeds (use a GPU)
+python src/SeeNN/models/cnnbaseline.py    # small CNN, 3 seeds, on the GPU through PyTorch
 python src/SeeNN/evaluatebaseline.py      # results table and figures for every model from saved predictions
 ```
 

@@ -12,10 +12,17 @@ it can learn). This script then does full training for each of the 3 seeds (each
 the shuffle order). Settings and seeds are in configs/cnnbaseline.yaml.
 
 Saves per-epoch history and val predictions to results/cnnbaseline/, and the trained models to checkpoints/ (not in git).
-Needs a GPU (kaggle or WSL2).
+Keras 3 runs the model on PyTorch, which can use an NVIDIA GPU on native Windows (TensorFlow can't after 2.10).
+TensorFlow's tf.data (pipeline.py) still loads and batches the images, on the CPU.
 
 Runs evaluatebaseline.py at the end for the results table and figures.
 """
+import os
+
+# both have to be set before keras and torch are imported
+os.environ["KERAS_BACKEND"] = "torch"  # Keras 3 runs the model on PyTorch
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")  # lets cuBLAS run deterministically (see main)
+
 import sys
 import time
 from pathlib import Path
@@ -23,9 +30,13 @@ from pathlib import Path
 import keras
 import numpy as np
 import pandas as pd
-import tensorflow as tf
+import tensorflow as tf  # only for the tf.data input pipeline
+import torch
 from keras import layers, models
 from sklearn.utils.class_weight import compute_class_weight
+
+if keras.backend.backend() != "torch":  # keras was already imported with another backend, e.g. earlier in a notebook
+    raise RuntimeError("set KERAS_BACKEND=torch before importing keras")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # src/SeeNN, for the modules below
 import evaluatebaseline
@@ -117,7 +128,7 @@ def add_weights(ds, labels):
 
 def train(seed):
     """trains one model on train, keeping the weights from the epoch with the lowest class-weighted val loss"""
-    keras.utils.set_random_seed(seed)  # python, numpy and tensorflow: initial weights and dropout
+    keras.utils.set_random_seed(seed)  # python, numpy, tensorflow and torch: initial weights and dropout
     _, train_labels = pipeline.read_split("train")
     _, val_labels = pipeline.read_split("val")
     train_ds = add_weights(pipeline.make_dataset("train", SETTINGS["batch_size"], seed=seed), train_labels) # shuffle with the current seed so every seed has different order
@@ -129,7 +140,8 @@ def train(seed):
     stop = keras.callbacks.EarlyStopping(monitor="val_loss", patience=SETTINGS["patience"], restore_best_weights=True)
     started = time.perf_counter() # start timer to measure training time
     fit = model.fit(train_ds, validation_data=add_weights(val_ds, val_labels), epochs=SETTINGS["max_epochs"],
-                    callbacks=[stop], verbose=2) # verbose=2 one line per epoch for progress
+                    callbacks=[stop], verbose=2,  # verbose=2 one line per epoch for progress
+                    shuffle=False)  # tf.data already shuffles train; this stops keras warning that it can't
 
     # save training results per epoch (used for loss-curve figure)
     history = pd.DataFrame(fit.history)
@@ -159,10 +171,10 @@ def remove_other_settings():
 
 
 def main():
-    tf.config.experimental.enable_op_determinism()  # force GPU to execute deterministically (same seed, same run)
+    torch.use_deterministic_algorithms(True)  # same seed, same run: deterministic GPU kernels, or an error naming the op
     RESULTS.mkdir(parents=True, exist_ok=True)
     remove_other_settings()
-    print(f"devices: {', '.join(d.device_type for d in tf.config.list_physical_devices())}\n")  # GPU listed if TF can use it
+    print(f"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'none found, training on the CPU'}\n")
 
     # full training, once per seed
     val_rows = evaluatebaseline.read_split("val")

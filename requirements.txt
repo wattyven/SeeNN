@@ -1,7 +1,9 @@
 # Python 3.14 (tested on 3.14.8)
+--extra-index-url https://download.pytorch.org/whl/cu130
 
 tensorflow==2.22.0rc0
 keras==3.15.1
+torch==2.14.1+cu130
 numpy==2.5.3
 pandas==3.0.6
 matplotlib==3.11.2
